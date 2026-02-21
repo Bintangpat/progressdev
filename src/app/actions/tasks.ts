@@ -145,6 +145,7 @@ export async function toggleChecklistItem(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Unauthorized" };
 
+  // Update checklist item status dengan isChecked sebagai variabel boleean di kode ini untuk ref ke is_checked di database
   const { error } = await supabase
     .from("checklist_items")
     .update({ is_checked: isChecked })
@@ -152,8 +153,6 @@ export async function toggleChecklistItem(
 
   if (error) return { error: error.message };
 
-  // Auto-compute task completion
-  // Get the task for this checklist item
   const { data: item } = await supabase
     .from("checklist_items")
     .select("task_id")
@@ -168,13 +167,28 @@ export async function toggleChecklistItem(
 
     if (allItems) {
       const allChecked = allItems.every((i) => i.is_checked);
-      await supabase
-        .from("tasks")
-        .update({
-          is_completed: allChecked,
-          status: allChecked ? "selesai" : "pengujian",
-        })
-        .eq("id", item.task_id);
+
+      if (allChecked) {
+        // All checklist items done → mark task as completed
+        await supabase
+          .from("tasks")
+          .update({ is_completed: true, status: "selesai" })
+          .eq("id", item.task_id);
+      } else {
+        // Not all done → only revert if task was previously "selesai"
+        const { data: currentTask } = await supabase
+          .from("tasks")
+          .select("status")
+          .eq("id", item.task_id)
+          .single();
+
+        if (currentTask?.status === "selesai") {
+          await supabase
+            .from("tasks")
+            .update({ is_completed: false, status: "dalam_pengerjaan" })
+            .eq("id", item.task_id);
+        }
+      }
 
       // Auto-compute project completion
       const { data: task } = await supabase
