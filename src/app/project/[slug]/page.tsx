@@ -112,6 +112,12 @@ export default function PublicProjectPage() {
           </span>
           <div className="flex-1" />
           <ThemeToggle />
+          <button
+            className="w-fit h-fit px-4 py-2 bg-foreground text-background rounded-lg hover:bg-foreground/80 transition-colors cursor-pointer"
+            onClick={() => window.location.reload()}
+          >
+            Fetch Data
+          </button>
         </div>
       </header>
 
