@@ -6,16 +6,32 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * Calculate overall project progress based on checklist items
- * progress = total_checked / total_checklist_items * 100
+ * Calculate overall project progress
+ * If tasks have checklist items: progress = checked / total_checklist * 100
+ * If no checklist items exist: progress = completed_tasks / total_tasks * 100
  */
+
+//buatfunction untuk menghitung progress project dengan membulatkan hasil ke terdekat dengan math.round
+// buat function
 export function calculateProgress(
-  tasks: { checklist_items: { is_checked: boolean }[] }[],
+  //deklarasi variable yang diperlukan dalam function
+  //yaitu task dengan isi
+  tasks: {
+    is_completed: boolean;
+    checklist_items: { is_checked: boolean }[];
+  }[],
 ): number {
+  if (tasks.length === 0) return 0;
+
   const allItems = tasks.flatMap((t) => t.checklist_items);
-  if (allItems.length === 0) return 0;
-  const checked = allItems.filter((item) => item.is_checked).length;
-  return Math.round((checked / allItems.length) * 100);
+  if (allItems.length > 0) {
+    const checked = allItems.filter((item) => item.is_checked).length;
+    return Math.round((checked / allItems.length) * 100);
+  }
+
+  // Fallback: calculate from completed tasks
+  const completed = tasks.filter((t) => t.is_completed).length;
+  return Math.round((completed / tasks.length) * 100);
 }
 
 /**
